@@ -32,4 +32,7 @@ test:
 	# Test cover all
 	go test -v -cover ./...
 
-.PHONY: postgres createdb dropdb migrateup start_postgres stop_postgres sqlc
+server:
+	go run main.go
+
+.PHONY: postgres createdb dropdb migrateup start_postgres stop_postgres sqlc server
