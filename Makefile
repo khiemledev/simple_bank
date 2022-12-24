@@ -1,3 +1,5 @@
+DB_URL="postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable"
+
 create_postgres:
 	docker run --name postgres15 -p 5432:5432\
 		-e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:15.1-alpine
@@ -16,19 +18,19 @@ dropdb:
 
 migrateup:
 	migrate --path db/migration -database\
-		"postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
+		"$(DB_URL)" -verbose up
 
 migratedown:
 	migrate --path db/migration -database\
-		"postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down
+		"$(DB_URL)" -verbose down
 
 migrateup1:
 	migrate --path db/migration -database\
-		"postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
+		"$(DB_URL)" -verbose up 1
 
 migratedown1:
 	migrate --path db/migration -database\
-		"postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down 1
+		"$(DB_URL)" -verbose down 1
 
 
 sqlc:
@@ -47,4 +49,10 @@ server:
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/khiemledev/simple_bank_golang/db/sqlc Store
 
-.PHONY: postgres createdb dropdb migrateup start_postgres stop_postgres sqlc server
+db_docs:
+	dbdocs build doc/db.dbml
+
+db_schema:
+	dbml2sql --postgres -o doc/schema.sql doc/db.dbml
+
+.PHONY: postgres createdb dropdb migrateup start_postgres stop_postgres sqlc server dbdocs
