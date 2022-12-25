@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -50,4 +51,61 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, user1.Email, user2.Email)
 	require.WithinDuration(t, user1.PasswordChangedAt, user2.PasswordChangedAt, time.Second)
 	require.WithinDuration(t, user1.CreatedAt, user2.CreatedAt, time.Second)
+}
+
+func TestUpdateUserEmail(t *testing.T) {
+	user := createRandomUser(t)
+
+	newEmail := util.RandomEmail()
+	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+		Username: user.Username,
+		Email: sql.NullString{
+			Valid:  true,
+			String: newEmail,
+		},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, updatedUser)
+	require.NotEqual(t, user.Email, updatedUser.Email)
+	require.Equal(t, user.HashedPassword, updatedUser.HashedPassword)
+	require.Equal(t, user.FullName, updatedUser.FullName)
+}
+
+func TestUpdateUserFullName(t *testing.T) {
+	user := createRandomUser(t)
+
+	newFullName := util.RandomOwner()
+	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+		Username: user.Username,
+		FullName: sql.NullString{
+			Valid:  true,
+			String: newFullName,
+		},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, updatedUser)
+	require.Equal(t, user.Email, updatedUser.Email)
+	require.Equal(t, user.HashedPassword, updatedUser.HashedPassword)
+	require.NotEqual(t, user.FullName, updatedUser.FullName)
+}
+
+func TestUpdateUserPassword(t *testing.T) {
+	user := createRandomUser(t)
+
+	newPassword, err := util.HashPassword(util.RandomString(32))
+	require.NoError(t, err)
+	require.NotEmpty(t, newPassword)
+
+	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+		Username: user.Username,
+		HashedPassword: sql.NullString{
+			Valid:  true,
+			String: newPassword,
+		},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, updatedUser)
+	require.Equal(t, user.Email, updatedUser.Email)
+	require.NotEqual(t, user.HashedPassword, updatedUser.HashedPassword)
+	require.Equal(t, user.FullName, updatedUser.FullName)
 }
